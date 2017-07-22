@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">PetSnaps</string>
+    <string name="title_activity_user_login">UserLoginActivity</string>
+
+    <!-- LOGIN ACTIVITY STRINGS -->
+    <string name="login_registration_link">Need an account? Create one here.</string>
+    <string name="login_failure_title">Unable to Login</string>
+    <string name="login_failure_message">Email and password do not match.</string>
+    <string name="login_ok">OK</string>
+
+    <!-- REGISTRATION ACTIVITY STRINGS -->
+    <string name="registration_success_message">Your account has been created!</string>
+    <string name="registration_success_title">Success</string>
+    <string name="registration_failure_message">Your account could not be created. Please try again later.</string>
+    <string name="registration_failure_title">Registration Error</string>
+    <string name="registration_ok">OK</string>
+
+
+    <!-- MAIN FEED ACTIVITY STRINGS -->
+    <string name="title_activity_main_feed">MainFeedActivity</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+</resources>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="16dp"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <ImageView
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:src="@drawable/paw_logo"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="PetSnaps"
+            android:textColor="@color/colorPrimary"
+            android:textSize="36sp"
+            android:textStyle="bold"/>
+
+    <EditText
+        android:id="@+id/login_email_et"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp"
+        android:padding="8dp"
+        android:inputType="textEmailAddress"
+        android:hint="Email"
+        android:background="@color/colorETBkgrnd"
+        android:textSize="20sp"/>
+
+    <EditText
+        android:id="@+id/login_password_et"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp"
+        android:padding="8dp"
+        android:inputType="textPassword"
+        android:hint="Password"
+        android:background="@color/colorETBkgrnd"
+        android:textSize="20sp"/>
+
+    <Button
+        android:id="@+id/login_bttn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:background="@color/colorPrimary"
+        android:text="Login"
+        android:textColor="@android:color/white"/>
+
+    <TextView
+        android:id="@+id/link_to_register_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/login_registration_link"
+        android:textSize="16sp"/>
+    </LinearLayout>
+
+</LinearLayout>

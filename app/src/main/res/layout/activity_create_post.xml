@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Button
+        android:id="@+id/submit_bttn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Submit Post"
+        android:background="@color/colorPrimary"
+        android:textColor="@color/colorWhiteText"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_alignParentBottom="true"/>
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/submit_bttn"
+        android:fillViewport="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:weightSum="7">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="4.5">
+                <ImageButton
+                    android:id="@+id/container_img_bttn"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/image_container"
+                    android:scaleType="centerCrop"
+                    android:adjustViewBounds="true"/>
+
+                <TextView
+                    android:id="@+id/container_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="Tap here to add an Image"/>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginEnd="16dp">
+
+                <TextView
+                    android:id="@+id/titleCharCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignRight="@+id/title_tv"
+                    android:layout_alignEnd="@+id/title_tv"
+                    android:text="0/15"
+                    android:textSize="12sp"/>
+                <EditText
+                    android:id="@id/title_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/titleCharCount"
+                    android:padding="10dp"
+                    android:background="@drawable/input_outline"
+                    android:hint="Title..."
+                    android:inputType="textPersonName|textCapSentences"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
+                android:layout_marginBottom="12dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginEnd="16dp">
+                <TextView
+                    android:id="@+id/descrpCharCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignRight="@+id/descrp_tv"
+                    android:layout_alignEnd="@+id/descrp_tv"
+                    android:text="0/150"
+                    android:textSize="12sp"/>
+                <EditText
+                    android:id="@id/descrp_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/descrpCharCount"
+                    android:padding="10dp"
+                    android:background="@drawable/input_outline"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:hint="Description..."
+                    android:maxLines="2"
+                    android:lines="2"/>
+            </RelativeLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>
