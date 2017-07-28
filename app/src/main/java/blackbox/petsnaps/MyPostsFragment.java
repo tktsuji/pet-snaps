@@ -19,9 +19,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-
-public class AllPostsFragment extends Fragment {
-
+public class MyPostsFragment extends Fragment {
     RecyclerView postList;
     boolean processLike = false;
     DatabaseReference mMainFeedRef;
@@ -51,7 +49,7 @@ public class AllPostsFragment extends Fragment {
         FirebaseRecyclerAdapter<PostItem, PostItemViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostItem, PostItemViewHolder>(
                 PostItem.class,
                 R.layout.post_item,
-                PostItemViewHolder.class, mMainFeedRef.orderByChild("reverse_timestamp")
+                PostItemViewHolder.class, mMainFeedRef.orderByChild("uid").equalTo(currentUser.getUid())
         ) {
             @Override
             protected void populateViewHolder(PostItemViewHolder viewHolder, PostItem model, int position) {
@@ -74,7 +72,7 @@ public class AllPostsFragment extends Fragment {
                 viewHolder.heartIcon.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(getActivity(), "You liked/unliked a post.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "You liked a post.", Toast.LENGTH_SHORT).show();
                         processLike = true;
                         mLikesRef.addValueEventListener(new ValueEventListener() {
                             @Override
@@ -101,7 +99,11 @@ public class AllPostsFragment extends Fragment {
                 });
             }
         };
-
         postList.setAdapter(firebaseRecyclerAdapter);
     }
+
+
+
+
+
 }

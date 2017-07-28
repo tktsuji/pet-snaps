@@ -22,8 +22,12 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <!-- OPTIONS MENU FOR VIEWPOST ACTIVITY -->
+    <string name="delete_post">Delete Post</string>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_blah">blah</string>
 
 
 </resources>

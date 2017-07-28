@@ -146,6 +146,7 @@ public class CreatePostActivity extends AppCompatActivity {
                                     newPost.child("image").setValue(downloadUrl.toString());
                                     newPost.child("uid").setValue(mCurrentUser.getUid());
                                     newPost.child("username").setValue(dataSnapshot.child("username").getValue());
+                                    newPost.child("numComments").setValue(0);
 
                                     // WARNING: USER'S DEVICE MAY BE SET TO WRONG TIME
                                     long reverseTime = -1 * System.currentTimeMillis();

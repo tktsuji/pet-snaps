@@ -3,7 +3,7 @@
     <color name="colorPrimary">#212121</color>
     <color name="colorText">#424242</color>
     <color name="colorPrimaryDark">#000000</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorAccent">#212121</color>
     <color name="colorMainBackground">#EFEBE9</color>
     <color name="colorETBkgrnd">#EEEEEE</color>
     <color name="colorPrimaryLight">#bdbdbd</color>
@@ -14,7 +14,8 @@
     <color name="colorDark">#694828</color>
 
     <color name="colorHeart">#f06292</color>
-    <color name="colorCVDivider">#eeeeee</color>
+    <color name="colorCVDivider">#e0e0e0</color>
+    <color name="colorUsername">#616161</color>
 <!--
     <color name="colorPrimary">#795548</color>
     <color name="colorPrimaryDark">#5D4037</color>

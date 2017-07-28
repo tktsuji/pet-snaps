@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="275dp"
+    android:minHeight="275dp"
+    android:minWidth="300dp"
+    android:layout_margin="16dp"
+    android:layout_gravity="center">
+
+    <TextView
+        android:id="@+id/comment_char_count_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_alignRight="@+id/comment_et"
+        android:layout_alignEnd="@+id/comment_et"
+        android:textSize="12sp"
+        android:text="0/150"/>
+
+    <EditText
+        android:id="@+id/comment_et"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_below="@id/comment_char_count_tv"
+        android:padding="10dp"
+        android:background="@drawable/input_outline"
+        android:inputType="textMultiLine|textCapSentences"
+        android:hint="Write a comment...."
+        android:maxLines="4"
+        android:lines="4"/>
+
+    <Button
+        android:id="@+id/post_comment_bttn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_below="@id/comment_et"
+        android:background="@color/colorPrimary"
+        android:text="Submit"
+        android:textStyle="bold"
+        android:textColor="@color/colorWhiteText"/>
+
+</RelativeLayout>

@@ -1,5 +1,8 @@
 package blackbox.petsnaps;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * Created by tricia on 7/18/17.
  */
@@ -12,6 +15,7 @@ public class PostItem {
     private String uid;
     private long reverse_timestamp;
     private String username;
+    private long numComments;
 
     public PostItem() {
 
@@ -24,6 +28,7 @@ public class PostItem {
         this.username = username;
         this.reverse_timestamp = reverse_timestamp;
         this.uid = uid;
+        this.numComments = 0;
     }
 
     public String getDescrp() {
@@ -74,4 +79,11 @@ public class PostItem {
         this.username = username;
     }
 
+    public long getNumComments() {
+        return numComments;
+    }
+
+    public void setNumComments(int numComments) {
+        this.numComments = numComments;
+    }
 }

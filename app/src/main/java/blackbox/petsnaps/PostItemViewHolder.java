@@ -27,6 +27,7 @@ public class PostItemViewHolder extends RecyclerView.ViewHolder {
 
     DatabaseReference mLikesRef;
     FirebaseAuth mAuth;
+    private boolean processComment = false;
 
     public PostItemViewHolder(View itemView) {
         super(itemView);
@@ -63,6 +64,25 @@ public class PostItemViewHolder extends RecyclerView.ViewHolder {
                 else {
                     heartIcon.setImageResource(R.drawable.heart_icon);
                     numLikesTV.setTextColor(context.getResources().getColor(R.color.colorPrimaryLight));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    public void setNumComments(final String post_key) {
+        final TextView numCommentsTV = (TextView) mView.findViewById(R.id.num_comments_tv);
+        DatabaseReference feedRef = FirebaseDatabase.getInstance().getReference().child("Main_Feed");
+        feedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.hasChild(post_key)) {
+                    long numComments = (long) dataSnapshot.child(post_key).child("numComments").getValue();
+                    numCommentsTV.setText(Long.toString(numComments));
                 }
             }
 

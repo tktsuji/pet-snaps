@@ -35,14 +35,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private String currUsername;
 
     private FirebaseDatabase mDatabase;
-    private DatabaseReference mMainFeedRef;
     private DatabaseReference mUsersRef;
-    private DatabaseReference mLikesRef;
 
     private RecyclerView postList;
     private ProgressDialog progressDialog;
+    private TextView welcomeTV;
 
     private boolean processLike = false;
+    private static int currFragment = 0; // 0:MainFeed | 1:MyPosts
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,9 +68,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
         mDatabase = FirebaseDatabase.getInstance();
-        mMainFeedRef = mDatabase.getReference().child("Main_Feed");
         mUsersRef = mDatabase.getReference().child("Users");
-        mLikesRef = mDatabase.getReference().child("Likes");
 
 
        // SET UP DRAWER LAYOUT
@@ -81,88 +79,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         toggle.syncState();
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        View headerView = navigationView.getHeaderView(0);
+        welcomeTV = (TextView) headerView.findViewById(R.id.welcome_tv);
+
         mUsersRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 currUsername = (String) dataSnapshot.child("username").getValue();
-                TextView welcomeTV = (TextView) findViewById(R.id.welcome_tv);
+                System.out.println("TEST: " + currUsername);
                 CharSequence welcome = "Hello, " + currUsername + "!";
                 welcomeTV.setText(welcome);
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
-
-        // SET UP RECYCLER VIEW
-        /*postList = (RecyclerView) findViewById(R.id.post_list);
-        postList.setHasFixedSize(true);
-        postList.setLayoutManager(new GridLayoutManager(this, 2));*/
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        // POPULATE RECYCLER VIEW WITH POSTS FROM THE DATABASE
         Log.d("MAIN FEED", "onStart()");
-        AllPostsFragment allPostsFrag = new AllPostsFragment();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, allPostsFrag)
-                .addToBackStack(null)
-                .commit();
-        /*FirebaseRecyclerAdapter<PostItem, PostItemViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostItem, PostItemViewHolder>(
-            PostItem.class,
-            R.layout.post_item,
-            PostItemViewHolder.class, mMainFeedRef.orderByChild("reverse_timestamp")
-        ) {
-            @Override
-            protected void populateViewHolder(PostItemViewHolder viewHolder, PostItem model, int position) {
-                final String post_key = getRef(position).getKey();
-
-                viewHolder.setTitle(model.getTitle());
-                viewHolder.setImage(getApplicationContext(), model.getImage());
-                viewHolder.setHeartIcon(getApplicationContext(), post_key);
-
-                viewHolder.mView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent i = new Intent(MainActivity.this, ViewPostActivity.class);
-                        i.putExtra("post_key", post_key);
-                        startActivity(i);
-                    }
-                });
-
-                viewHolder.heartIcon.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(MainActivity.this, "You liked a post.", Toast.LENGTH_SHORT).show();
-                        processLike = true;
-                        mLikesRef.addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (processLike) {
-                                    if (dataSnapshot.child(post_key).hasChild(currentUser.getUid())) {
-                                        // USER HAS UNLIKED A POST
-                                        mLikesRef.child(post_key).child(currentUser.getUid()).removeValue();
-                                        processLike = false;
-                                    } else {
-                                        // USER HAS LIKED A POST
-                                        mLikesRef.child(post_key).child(currentUser.getUid()).setValue("true");
-                                        processLike = false;
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-                });
-            }
-        };
-
-        postList.setAdapter(firebaseRecyclerAdapter); */
+        if (currFragment == 0)
+            swapInMainFeed();
+        else if (currFragment == 1)
+            swapInMyPosts();
         progressDialog.dismiss();
     }
 
@@ -206,16 +147,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-            //setMyPosts();
-
-
-        } else if (id == R.id.nav_slideshow) {
+        if (id == R.id.nav_feed) {
+            swapInMainFeed();
+            currFragment = 0;
+        } else if (id == R.id.nav_my_posts) {
+            swapInMyPosts();
+            currFragment = 1;
+        } else if (id == R.id.nav_my_comments) {
 
         }
-        else if (id == R.id.nav_send) {
+        else if (id == R.id.nav_sign_out) {
             firebaseAuth.signOut();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
@@ -226,60 +167,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-    private void setMyPosts() {
-        FirebaseRecyclerAdapter<PostItem, PostItemViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostItem, PostItemViewHolder>(
-                PostItem.class,
-                R.layout.post_item,
-                PostItemViewHolder.class, mMainFeedRef.orderByChild("uid").equalTo(currentUser.getUid())
-        ) {
-            @Override
-            protected void populateViewHolder(PostItemViewHolder viewHolder, PostItem model, int position) {
-                final String post_key = getRef(position).getKey();
+   private void swapInMainFeed() {
+       AllPostsFragment allPostsFrag = new AllPostsFragment();
+       FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+       transaction.replace(R.id.fragment_container, allPostsFrag)
+               .addToBackStack(null)
+               .commit();
 
-                viewHolder.setTitle(model.getTitle());
-                viewHolder.setImage(getApplicationContext(), model.getImage());
-                viewHolder.setHeartIcon(getApplicationContext(), post_key);
+       CharSequence title = "Feed";
+       if (getSupportActionBar() != null)
+        getSupportActionBar().setTitle(title);
+   }
 
-                viewHolder.mView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent i = new Intent(MainActivity.this, ViewPostActivity.class);
-                        i.putExtra("post_key", post_key);
-                        startActivity(i);
-                    }
-                });
+   private void swapInMyPosts() {
+       MyPostsFragment myPostsFrag = new MyPostsFragment();
+       FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+       transaction.replace(R.id.fragment_container, myPostsFrag)
+               .addToBackStack(null)
+               .commit();
 
-                viewHolder.heartIcon.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(MainActivity.this, "You liked a post.", Toast.LENGTH_SHORT).show();
-                        processLike = true;
-                        mLikesRef.addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (processLike) {
-                                    if (dataSnapshot.child(post_key).hasChild(currentUser.getUid())) {
-                                        // USER HAS UNLIKED A POST
-                                        mLikesRef.child(post_key).child(currentUser.getUid()).removeValue();
-                                        processLike = false;
-                                    } else {
-                                        // USER HAS LIKED A POST
-                                        mLikesRef.child(post_key).child(currentUser.getUid()).setValue("true");
-                                        processLike = false;
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-                });
-            }
-        };
-        postList.setAdapter(firebaseRecyclerAdapter);
-    }
+       CharSequence title = "My Posts";
+       if (getSupportActionBar() != null)
+           getSupportActionBar().setTitle(title);
+   }
 
 }
