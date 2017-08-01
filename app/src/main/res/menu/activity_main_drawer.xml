@@ -11,10 +11,6 @@
             android:icon="@drawable/ic_photo_library_black_24dp"
             android:title="My Posts" />
         <item
-            android:id="@+id/nav_my_comments"
-            android:icon="@drawable/ic_comment_black_24dp"
-            android:title="My Comments" />
-        <item
             android:id="@+id/nav_sign_out"
             android:icon="@drawable/ic_keyboard_backspace_black_24dp"
             android:title="Sign Out" />

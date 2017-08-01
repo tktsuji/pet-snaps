@@ -25,6 +25,12 @@
     <!-- OPTIONS MENU FOR VIEWPOST ACTIVITY -->
     <string name="delete_post">Delete Post</string>
 
+    <!-- CREATE POST ACTIVITY DIALOG OPTIONS -->
+    <string-array name="image_options">
+        <item>Take with camera</item>
+        <item>Choose from gallery</item>
+    </string-array>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_blah">blah</string>

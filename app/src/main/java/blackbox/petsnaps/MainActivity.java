@@ -61,39 +61,41 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (currentUser == null) {
             // USER NEEDS TO LOG IN FIRST
+            Log.d("MAINACTIVITY", "Sending to Login");
             progressDialog.dismiss();
             Intent i = new Intent(this, LoginActivity.class);
             startActivity(i);
             finish();
         }
+        else {
+            mDatabase = FirebaseDatabase.getInstance();
+            mUsersRef = mDatabase.getReference().child("Users");
 
-        mDatabase = FirebaseDatabase.getInstance();
-        mUsersRef = mDatabase.getReference().child("Users");
+            // SET UP DRAWER LAYOUT
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            drawer.setDrawerListener(toggle);
+            toggle.syncState();
+            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            navigationView.setNavigationItemSelectedListener(this);
+            View headerView = navigationView.getHeaderView(0);
+            welcomeTV = (TextView) headerView.findViewById(R.id.welcome_tv);
 
+            mUsersRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    currUsername = (String) dataSnapshot.child("username").getValue();
+                    System.out.println("TEST: " + currUsername);
+                    CharSequence welcome = "Hello, " + currUsername + "!";
+                    welcomeTV.setText(welcome);
+                }
 
-       // SET UP DRAWER LAYOUT
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        View headerView = navigationView.getHeaderView(0);
-        welcomeTV = (TextView) headerView.findViewById(R.id.welcome_tv);
-
-        mUsersRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                currUsername = (String) dataSnapshot.child("username").getValue();
-                System.out.println("TEST: " + currUsername);
-                CharSequence welcome = "Hello, " + currUsername + "!";
-                welcomeTV.setText(welcome);
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            });
+        }
     }
 
     @Override
@@ -105,6 +107,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         else if (currFragment == 1)
             swapInMyPosts();
         progressDialog.dismiss();
+
+        /* TESTING ---------------------------------- */
+        new VisionAnalysisRetriever();
     }
 
 
@@ -153,8 +158,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_my_posts) {
             swapInMyPosts();
             currFragment = 1;
-        } else if (id == R.id.nav_my_comments) {
-
         }
         else if (id == R.id.nav_sign_out) {
             firebaseAuth.signOut();

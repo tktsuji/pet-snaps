@@ -4,8 +4,13 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.os.FileUriExposedException;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -37,17 +42,29 @@ import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+
+import static android.os.Environment.getExternalStoragePublicDirectory;
 
 
 public class CreatePostActivity extends AppCompatActivity {
 
+    private static final String APP_TAG = "PetSnaps";
     private static final String TAG = "CREATEPOSTACTIVITY";
     private ImageButton containerImgBttn;
     private EditText titleET, descrpET;
     private TextView containerTV;
     private Button submitBttn;
-    private static final int GALLERY_REQUEST = 1;
+    private static final int GALLERY_REQUEST = 1234;
+    private static final int CAMERA_REQUEST = 5678;
+
+    private String photoFilename;
+
+    private String mCurrentPhotoPath;
+    private Uri newUri;
+
     private Uri imageUri = null;
     private int imageWidth, imageHeight;
     //private int imageWidth, imageHeight;
@@ -79,26 +96,12 @@ public class CreatePostActivity extends AppCompatActivity {
 
         setUpEditTexts();
 
-        // Get dimensions of ImageButton
-       /* containerImgBttn.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                containerImgBttn.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                imageWidth = containerImgBttn.getWidth();
-                imageHeight = containerImgBttn.getHeight();
-                Log.d("TAG", "Width: " + imageWidth + "Height: " + imageHeight);
-            }
-        });*/
-
-
         progressDialog = new ProgressDialog(this);
 
         containerImgBttn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent galleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                galleryIntent.setType("image/*");
-                startActivityForResult(galleryIntent, GALLERY_REQUEST);
+                setImage();
             }
         });
 
@@ -108,6 +111,55 @@ public class CreatePostActivity extends AppCompatActivity {
                 submitPost();
             }
         });
+    }
+
+    private void setImage() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Get Image").setItems(R.array.image_options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (which == 0) {
+                    photoFilename = "PetSnaps" + System.currentTimeMillis() + ".jpg";
+                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    newUri = getPhotoFileUri(photoFilename);
+                    cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, newUri);
+                    Log.d(TAG, "AFTER PUT EXTRA");
+                    if (cameraIntent.resolveActivity(getPackageManager()) != null)
+                        startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                }
+                else {
+                    Intent galleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    galleryIntent.setType("image/*");
+                    startActivityForResult(galleryIntent, GALLERY_REQUEST);
+                }
+            }
+        }).show();
+    }
+
+    // Returns the Uri for a photo stored on disk given the filename
+    private Uri getPhotoFileUri(String filename) {
+        if (isExternalStorageAvailable()) {
+            File mediaStorageDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), APP_TAG);
+            if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()) {
+                Log.d(APP_TAG, "failed to create directory");
+            }
+            File file = new File(mediaStorageDir.getPath() + File.separator + filename);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N){
+                return Uri.fromFile(file);
+            } else {
+                return FileProvider.getUriForFile(CreatePostActivity.this, "blackbox.petsnaps.fileprovider", file);
+            }
+        }
+        else {
+            Log.v(APP_TAG, "NO EXTERNAL STORAGE AVAILABLE");
+        }
+        return null;
+    }
+
+    // Returns true if external storage for photos is available
+    private boolean isExternalStorageAvailable() {
+        String state = Environment.getExternalStorageState();
+        return state.equals(Environment.MEDIA_MOUNTED);
     }
 
     private void submitPost() {
@@ -124,8 +176,17 @@ public class CreatePostActivity extends AppCompatActivity {
             try {
                 // COMPRESS IMAGE
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+
+                // BitmapFactory options to downsize the image
+                //BitmapFactory.Options options = new BitmapFactory.Options();
+                //options.inSampleSize = 2;
+                //InputStream is = getContentResolver().openInputStream(imageUri);
+                //Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
+                // Compress bitmap
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 1, baos);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 1, baos); // FOR TESTING ONLY
+                /*bitmap.compress(Bitmap.CompressFormat.JPEG, 30, baos);    OK QUALITY */
+                /*bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos); */
                 byte[] data = baos.toByteArray();
 
                 // UPLOAD IMAGE TO STORAGE
@@ -176,9 +237,15 @@ public class CreatePostActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d(APP_TAG, "ON ACTIVITY RESULT");
 
-        if (requestCode == GALLERY_REQUEST && resultCode == RESULT_OK) {
-            imageUri = data.getData();
+        if ((requestCode == GALLERY_REQUEST || requestCode == CAMERA_REQUEST) && resultCode == RESULT_OK) {
+            if (requestCode == GALLERY_REQUEST)
+                imageUri = data.getData();
+            else {
+                Log.d(TAG, "ABOUT TO GET URI FROM CAMERA");
+                imageUri = newUri;
+            }
 
             // GET DIMENSIONS OF CONTAINER
             int imageWidth = containerImgBttn.getWidth();
