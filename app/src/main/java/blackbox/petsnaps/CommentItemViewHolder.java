@@ -16,10 +16,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 
-/**
- * Created by tricia on 7/26/17.
- */
-
 public class CommentItemViewHolder extends RecyclerView.ViewHolder {
     private View mView;
 

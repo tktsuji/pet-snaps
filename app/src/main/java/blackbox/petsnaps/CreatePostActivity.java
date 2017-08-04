@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.FileUriExposedException;
 import android.provider.MediaStore;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -45,11 +46,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import static android.os.Environment.getExternalStoragePublicDirectory;
 
 
-public class CreatePostActivity extends AppCompatActivity {
+public class CreatePostActivity extends AppCompatActivity implements AddTagsFragment.TagsListener{
 
     private static final String APP_TAG = "PetSnaps";
     private static final String TAG = "CREATEPOSTACTIVITY";
@@ -61,13 +63,13 @@ public class CreatePostActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST = 5678;
 
     private String photoFilename;
-
-    private String mCurrentPhotoPath;
     private Uri newUri;
 
+
     private Uri imageUri = null;
-    private int imageWidth, imageHeight;
-    //private int imageWidth, imageHeight;
+    private Uri downloadUrl;
+
+    String title, descrp;
 
     private StorageReference mStorage;
     private DatabaseReference mDatabase;
@@ -93,7 +95,6 @@ public class CreatePostActivity extends AppCompatActivity {
         descrpET = (EditText) findViewById(R.id.descrp_tv);
         containerTV = (TextView) findViewById(R.id.container_tv);
         submitBttn = (Button) findViewById(R.id.submit_bttn);
-
         setUpEditTexts();
 
         progressDialog = new ProgressDialog(this);
@@ -108,7 +109,7 @@ public class CreatePostActivity extends AppCompatActivity {
         submitBttn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                submitPost();
+                startSubmit();
             }
         });
     }
@@ -162,12 +163,12 @@ public class CreatePostActivity extends AppCompatActivity {
         return state.equals(Environment.MEDIA_MOUNTED);
     }
 
-    private void submitPost() {
+    private void startSubmit() {
         progressDialog.setMessage("Submitting post...");
 
-        final String title = titleET.getText().toString().trim();
+        title = titleET.getText().toString().trim();
         String descrpTemp = descrpET.getText().toString().trim();
-        final String descrp = descrpTemp.replace("\n", " ");
+        descrp = descrpTemp.replace("\n", " ");
 
         if (!TextUtils.isEmpty(title)  && imageUri != null) {
             progressDialog.show();
@@ -176,63 +177,106 @@ public class CreatePostActivity extends AppCompatActivity {
             try {
                 // COMPRESS IMAGE
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-
-                // BitmapFactory options to downsize the image
-                //BitmapFactory.Options options = new BitmapFactory.Options();
-                //options.inSampleSize = 2;
-                //InputStream is = getContentResolver().openInputStream(imageUri);
-                //Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
-                // Compress bitmap
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 1, baos); // FOR TESTING ONLY
-                /*bitmap.compress(Bitmap.CompressFormat.JPEG, 30, baos);    OK QUALITY */
-                /*bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos); */
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 1, baos); // FOR TESTING
                 byte[] data = baos.toByteArray();
 
                 // UPLOAD IMAGE TO STORAGE
                 UploadTask uploadTask = filepath.putBytes(data);
 
-                // ENTER POST INFO INTO DATABASE
+                // CHECK IF IMAGE HAS EXPLICIT CONTENT
                 uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        final Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                        if (downloadUrl != null && mAuth.getCurrentUser() != null) {
-                            final DatabaseReference newPost = mDatabase.push();
-                            mUserDBRef.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    newPost.child("title").setValue(title);
-                                    newPost.child("descrp").setValue(descrp);
-                                    newPost.child("image").setValue(downloadUrl.toString());
-                                    newPost.child("uid").setValue(mCurrentUser.getUid());
-                                    newPost.child("username").setValue(dataSnapshot.child("username").getValue());
-                                    newPost.child("numComments").setValue(0);
-
-                                    // WARNING: USER'S DEVICE MAY BE SET TO WRONG TIME
-                                    long reverseTime = -1 * System.currentTimeMillis();
-                                    newPost.child("reverse_timestamp").setValue(reverseTime);
-                                    startActivity(new Intent(CreatePostActivity.this, MainActivity.class));
-                                    finish();
-                                }
-                                @Override
-                                public void onCancelled(DatabaseError databaseError) {
-                                    Log.d("CREATEPOSTACTIVITY", "onCancelled()");
-                                }
-                            });
-                        }
-                        progressDialog.dismiss();
+                        downloadUrl = taskSnapshot.getDownloadUrl();
+                        checkIfExplicit();
                     }
                 });
+
             } catch (IOException e) {
                 Log.d(TAG, e.toString());
+                progressDialog.dismiss();
             }
         }
         else {
             Toast.makeText(this, "Please enter an image and title.", Toast.LENGTH_SHORT).show();
         }
-
     }
+
+    private void checkIfExplicit() {
+        new SafetyAnalysisRetriever(downloadUrl.toString(), new SafetyAnalysisRetriever.OnAnalysisRetrievedListener() {
+            @Override
+            public void OnAnalysisRetrieved(Boolean isImageSafe) {
+                if (isImageSafe) {
+                    startTags();
+                }
+                else {
+                    progressDialog.dismiss();
+
+                    // DELETE IMAGE FROM STORAGE
+                    FirebaseStorage mStorage = FirebaseStorage.getInstance();
+                    StorageReference photoRef = mStorage.getReferenceFromUrl(downloadUrl.toString());
+                    photoRef.delete();
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(CreatePostActivity.this);
+                    builder.setTitle("Error")
+                            .setMessage("Your photo has been flagged for explicit content. Please try using a different photo.")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            })
+                            .show();
+                }
+            }
+        });
+    }
+
+    private void startTags() {
+        FragmentManager fm = getSupportFragmentManager();
+        AddTagsFragment addTagsFragment = new AddTagsFragment();
+        addTagsFragment.setCancelable(false);
+        addTagsFragment.show(fm, "SHOW ADD TAGS FRAG");
+    }
+
+    public void addTags(ArrayList<Boolean> tags){
+        finishSubmit(tags);
+    }
+
+
+    private void finishSubmit(final ArrayList<Boolean> tags) {
+        // ENTER POST INFO INTO DATABASE
+        if (mAuth.getCurrentUser() != null) {
+
+            final DatabaseReference newPost = mDatabase.push();
+            mUserDBRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    newPost.child("title").setValue(title);
+                    newPost.child("descrp").setValue(descrp);
+                    newPost.child("image").setValue(downloadUrl.toString());
+                    newPost.child("uid").setValue(mCurrentUser.getUid());
+                    newPost.child("username").setValue(dataSnapshot.child("username").getValue());
+                    newPost.child("numComments").setValue(0);
+                    newPost.child("tags").setValue(tags);
+                    // WARNING: USER'S DEVICE MAY BE SET TO WRONG TIME -- TEMPORARY SOLUTION
+                    long reverseTime = -1 * System.currentTimeMillis();
+                    newPost.child("reverse_timestamp").setValue(reverseTime);
+
+                    startActivity(new Intent(CreatePostActivity.this, MainActivity.class));
+                    finish();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.d("CREATEPOSTACTIVITY", "onCancelled()");
+                }
+            });
+        }
+        progressDialog.dismiss();
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -256,8 +300,6 @@ public class CreatePostActivity extends AppCompatActivity {
                     .setGuidelines(CropImageView.Guidelines.ON)
                     .setAspectRatio(imageWidth, imageHeight)
                     .start(this);
-
-            //containerImgBttn.setImageURI(imageUri);
         }
 
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
@@ -329,10 +371,5 @@ public class CreatePostActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("No", null)
                 .show();
-    }
-
-    public void setImageWidthHeight(int width, int height) {
-        this.imageWidth = width;
-        this.imageHeight = height;
     }
 }

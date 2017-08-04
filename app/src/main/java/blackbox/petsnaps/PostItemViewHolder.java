@@ -17,13 +17,9 @@ import com.squareup.picasso.Picasso;
 
 import java.util.Locale;
 
-/**
- * Created by tricia on 7/18/17.
- */
-
 public class PostItemViewHolder extends RecyclerView.ViewHolder {
-    View mView;
-    ImageView heartIcon;
+    public View mView;
+    public ImageView heartIcon;
 
     DatabaseReference mLikesRef;
     FirebaseAuth mAuth;

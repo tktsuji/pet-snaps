@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:id="@+id/linear_layout"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/prompt_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Animals featured in this photo:"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
+
+        <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/checkBoxDog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Dog"
+            android:textSize="16sp"/>
+
+        <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/checkBoxCat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cat"
+            android:textSize="16sp"/>
+
+        <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/checkBoxBird"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bird"
+            android:textSize="16sp"/>
+
+        <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/checkBoxRabbit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rabbit"
+            android:textSize="16sp"/>
+
+        <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/checkBoxReptile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Reptile"
+            android:textSize="16sp"/>
+
+        <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/checkBoxRodent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rodent"
+            android:textSize="16sp"/>
+
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/add_tags_bttn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/linear_layout"
+        android:text="Done"
+        android:textColor="#fafafa"
+        android:textStyle="bold"
+        android:background="@color/colorPrimary"/>
+
+</RelativeLayout>

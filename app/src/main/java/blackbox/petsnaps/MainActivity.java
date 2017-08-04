@@ -3,8 +3,9 @@ package blackbox.petsnaps;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.widget.GridLayoutManager;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -16,10 +17,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -28,33 +28,38 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+import blackbox.petsnaps.FilterFragments.MyPostsFragment;
 
+import static android.view.View.GONE;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
     private String currUsername;
-
     private FirebaseDatabase mDatabase;
     private DatabaseReference mUsersRef;
-
-    private RecyclerView postList;
     private ProgressDialog progressDialog;
-    private TextView welcomeTV;
 
-    private boolean processLike = false;
-    private static int currFragment = 0; // 0:MainFeed | 1:MyPosts
+    private TextView welcomeTV;
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
+    private FrameLayout fragmentContainer;
+    private Toolbar toolbar;
+
+    private static int currState = 0; // 0:MainFeed WITH TABS | 1:MyPosts
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d("MAIN FEED", "onCreate()");
         setContentView(R.layout.activity_main_feed);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
         progressDialog.show();
+
 
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
@@ -68,33 +73,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             finish();
         }
         else {
-            mDatabase = FirebaseDatabase.getInstance();
-            mUsersRef = mDatabase.getReference().child("Users");
-
-            // SET UP DRAWER LAYOUT
-            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-            drawer.setDrawerListener(toggle);
-            toggle.syncState();
-            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-            navigationView.setNavigationItemSelectedListener(this);
-            View headerView = navigationView.getHeaderView(0);
-            welcomeTV = (TextView) headerView.findViewById(R.id.welcome_tv);
-
-            mUsersRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    currUsername = (String) dataSnapshot.child("username").getValue();
-                    System.out.println("TEST: " + currUsername);
-                    CharSequence welcome = "Hello, " + currUsername + "!";
-                    welcomeTV.setText(welcome);
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                }
-            });
+            fragmentContainer = (FrameLayout) findViewById(R.id.fragment_container);
+            setTabLayout();
+            setDrawerLayout();
         }
     }
 
@@ -102,32 +83,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     protected void onStart() {
         super.onStart();
         Log.d("MAIN FEED", "onStart()");
-        if (currFragment == 0)
+        if (currState == 0)
             swapInMainFeed();
-        else if (currFragment == 1)
+        else if (currState == 1)
             swapInMyPosts();
-        progressDialog.dismiss();
-
-        /* TESTING ---------------------------------- */
-        new VisionAnalysisRetriever();
-    }
-
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            // DO NOTHING
-        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main_activity, menu);
-
         return true;
     }
 
@@ -153,11 +118,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
         if (id == R.id.nav_feed) {
-            swapInMainFeed();
-            currFragment = 0;
+            if (currState != 0) {
+                swapInMainFeed();
+                currState = 0;
+            }
         } else if (id == R.id.nav_my_posts) {
-            swapInMyPosts();
-            currFragment = 1;
+            if (currState != 1) {
+                swapInMyPosts();
+                currState = 1;
+            }
         }
         else if (id == R.id.nav_sign_out) {
             firebaseAuth.signOut();
@@ -171,11 +140,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
    private void swapInMainFeed() {
-       AllPostsFragment allPostsFrag = new AllPostsFragment();
-       FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-       transaction.replace(R.id.fragment_container, allPostsFrag)
-               .addToBackStack(null)
-               .commit();
+       tabLayout.getTabAt(0);
+       fragmentContainer.setVisibility(View.GONE);
+       viewPager.setVisibility(View.VISIBLE);
+       tabLayout.setVisibility(View.VISIBLE);
 
        CharSequence title = "Feed";
        if (getSupportActionBar() != null)
@@ -188,10 +156,80 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
        transaction.replace(R.id.fragment_container, myPostsFrag)
                .addToBackStack(null)
                .commit();
+       fragmentContainer.setVisibility(View.VISIBLE);
+       viewPager.setVisibility(GONE);
+       tabLayout.setVisibility(GONE);
 
        CharSequence title = "My Posts";
        if (getSupportActionBar() != null)
            getSupportActionBar().setTitle(title);
    }
+
+   private void setTabLayout() {
+       tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+       tabLayout.addTab(tabLayout.newTab().setText("All"));
+       tabLayout.addTab(tabLayout.newTab().setText("Dogs"));
+       tabLayout.addTab(tabLayout.newTab().setText("Cats"));
+       tabLayout.addTab(tabLayout.newTab().setText("Birds"));
+       tabLayout.addTab(tabLayout.newTab().setText("Rabbits"));
+       tabLayout.addTab(tabLayout.newTab().setText("Reptiles"));
+       tabLayout.addTab(tabLayout.newTab().setText("Rodents"));
+
+       viewPager = (ViewPager) findViewById(R.id.pager);
+       final blackbox.petsnaps.PagerAdapter pagerAdapter
+               = new blackbox.petsnaps.PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount());
+       viewPager.setAdapter(pagerAdapter);
+       viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+       tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+           @Override
+           public void onTabSelected(TabLayout.Tab tab) {
+               viewPager.setCurrentItem(tab.getPosition());
+           }
+           @Override
+           public void onTabUnselected(TabLayout.Tab tab) {}
+           @Override
+           public void onTabReselected(TabLayout.Tab tab) {}
+       });
+   }
+
+   private void setDrawerLayout() {
+       DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+       ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+               this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+       drawer.setDrawerListener(toggle);
+       toggle.syncState();
+       NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+       navigationView.setNavigationItemSelectedListener(this);
+       View headerView = navigationView.getHeaderView(0);
+       welcomeTV = (TextView) headerView.findViewById(R.id.welcome_tv);
+
+       mDatabase = FirebaseDatabase.getInstance();
+       mUsersRef = mDatabase.getReference().child("Users");
+       mUsersRef.child(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
+           @Override
+           public void onDataChange(DataSnapshot dataSnapshot) {
+               currUsername = (String) dataSnapshot.child("username").getValue();
+               System.out.println("TEST: " + currUsername);
+               CharSequence welcome = "Hello, " + currUsername + "!";
+               welcomeTV.setText(welcome);
+               progressDialog.dismiss();
+           }
+
+           @Override
+           public void onCancelled(DatabaseError databaseError) {
+               progressDialog.dismiss();
+           }
+       });
+   }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            // DO NOTHING
+        }
+    }
 
 }

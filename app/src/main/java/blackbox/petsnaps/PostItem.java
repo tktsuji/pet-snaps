@@ -3,10 +3,6 @@ package blackbox.petsnaps;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/**
- * Created by tricia on 7/18/17.
- */
-
 public class PostItem {
 
     private String title;

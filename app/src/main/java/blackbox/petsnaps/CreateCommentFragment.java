@@ -33,7 +33,6 @@ public class CreateCommentFragment extends DialogFragment {
     @Override
     public void onAttach(Context context) {
         sbcInterface = (SubmitButtonClick) context;
-        System.out.println(context.toString());
         super.onAttach(context);
     }
 

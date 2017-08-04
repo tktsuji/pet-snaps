@@ -4,6 +4,9 @@ import android.media.Image;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -17,34 +20,32 @@ import java.util.Scanner;
 /* RESOURCE:
    https://cloud.google.com/community/tutorials/make-an-http-request-to-the-cloud-vision-api-from-java */
 
-public class VisionAnalysisRetriever {
+public class SafetyAnalysisRetriever {
 
     private final static String API_KEY = BuildConfig.API_KEY;
     private static String imageUrl;
 
-    public VisionAnalysisRetriever() {
-        new GetAnalysisTask().execute();
-    }
-    /*public VisionAnalysisRetriever(String imgUrl) {
+    public SafetyAnalysisRetriever(String imgUrl, OnAnalysisRetrievedListener listener) {
         imageUrl = imgUrl;
+        new GetAnalysisTask(listener).execute();
     }
 
     public interface OnAnalysisRetrievedListener {
-        void OnAnalysisRetrieved(String thing);
-    } */
+        void OnAnalysisRetrieved(Boolean isImageSafe);
+    }
 
-    private class GetAnalysisTask extends AsyncTask<Void, Void, Void> {
-       // private OnAnalysisRetrievedListener listener;
+    private class GetAnalysisTask extends AsyncTask<Void, Void, Boolean> {
+        private OnAnalysisRetrievedListener listener;
 
-        /*public GetAnalysisTask(OnAnalysisRetrievedListener listener) {
+        public GetAnalysisTask(OnAnalysisRetrievedListener listener) {
             this.listener = listener;
-        }*/
-        public GetAnalysisTask() {}
-
+        }
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Boolean doInBackground(Void... params) {
+            // USING GOOGLE VISION TO CHECK FOR EXPLICIT IMAGE CONTENT
             Log.d("RETRIEVER", "DOINBACKGROUND INITIATED");
+            Boolean isImageSafe = true;
             try {
                 Log.d("RETRIEVER", "IN TRY BLOCK");
                 String TARGET_URL = "https://vision.googleapis.com/v1/images:annotate?";
@@ -56,13 +57,13 @@ public class VisionAnalysisRetriever {
                 httpConnection.setRequestProperty("Content-Type", "application/json");
                 httpConnection.setDoOutput(true);
 
-                String imageUrl = "";
+                String formattedUrl = "\"" + imageUrl + "\"";
                 BufferedWriter httpRequestBodyWriter = new BufferedWriter(new
                         OutputStreamWriter(httpConnection.getOutputStream()));
                 httpRequestBodyWriter.write
-                        ("{\"requests\":  [{ \"features\":  [ {\"type\": \"LABEL_DETECTION\""
+                        ("{\"requests\":  [{ \"features\":  [ {\"type\": \"SAFE_SEARCH_DETECTION\""
                                 +"}], \"image\": {\"source\": { \"imageUri\":"
-                                + imageUrl + "}}}]}");
+                                + formattedUrl + "}}}]}");
                 httpRequestBodyWriter.close();
                 String response = httpConnection.getResponseMessage();
 
@@ -73,20 +74,38 @@ public class VisionAnalysisRetriever {
                     return null;
                 }
 
+                // GET RESPONSE AS STRING
                 Scanner httpResponseScanner = new Scanner (httpConnection.getInputStream());
                 String resp = "";
                 while (httpResponseScanner.hasNext()) {
                     String line = httpResponseScanner.nextLine();
                     resp += line;
-                    System.out.println(line);  //  alternatively, print the line of response
                 }
                 httpResponseScanner.close();
 
+                // PARSE RESPONSE FOR ADULT AND VIOLENCE LEVELS
+                JSONObject jsonObject = new JSONObject(resp);
+                JSONArray responses = jsonObject.getJSONArray("responses");
+                JSONObject firstResponse = responses.getJSONObject(0);
+                JSONObject safeSearchAnnotation = firstResponse.getJSONObject("safeSearchAnnotation");
+                String adultContentLvl = safeSearchAnnotation.getString("adult");
+                String violenceContentLvl = safeSearchAnnotation.getString("violence");
+
+                System.out.println("ADULT: " + adultContentLvl + " VIOLENCE: " + violenceContentLvl);
+                if (adultContentLvl.equals("VERY_LIKELY") || violenceContentLvl.equals("VERY_LIKELY")) {
+                    isImageSafe = false;
+                }
             }
             catch (Exception e) {
                 Log.d("EXCEPTION", "GOOGLE VISION ERROR");
+                e.printStackTrace();
             }
-            return null;
+            return isImageSafe;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isImageSafe) {
+            listener.OnAnalysisRetrieved(isImageSafe);
         }
     }
 

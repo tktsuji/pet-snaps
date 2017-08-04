@@ -1,9 +1,5 @@
 package blackbox.petsnaps;
 
-/**
- * Created by tricia on 7/26/17.
- */
-
 public class CommentItem {
     private String username;
     private String uid;
