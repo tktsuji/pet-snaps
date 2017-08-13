@@ -57,6 +57,7 @@ public class SafetyAnalysisRetriever {
                 httpConnection.setRequestProperty("Content-Type", "application/json");
                 httpConnection.setDoOutput(true);
 
+                Log.d("RETRIEVER IMGURL", imageUrl);
                 String formattedUrl = "\"" + imageUrl + "\"";
                 BufferedWriter httpRequestBodyWriter = new BufferedWriter(new
                         OutputStreamWriter(httpConnection.getOutputStream()));
@@ -82,6 +83,8 @@ public class SafetyAnalysisRetriever {
                     resp += line;
                 }
                 httpResponseScanner.close();
+
+                System.out.println(resp);
 
                 // PARSE RESPONSE FOR ADULT AND VIOLENCE LEVELS
                 JSONObject jsonObject = new JSONObject(resp);

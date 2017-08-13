@@ -27,25 +27,27 @@ import blackbox.petsnaps.ViewPostActivity;
 
 public class AllPostsFragment extends BaseFilterFragment {
 
+    private FirebaseRecyclerAdapter<PostItem, PostItemViewHolder> firebaseRecyclerAdapter;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        FirebaseRecyclerAdapter<PostItem, PostItemViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostItem, PostItemViewHolder>(
+        Log.d("ALLPOSTSFRAGMENT", "ON START");
+        firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostItem, PostItemViewHolder>(
                 PostItem.class,
                 R.layout.post_item,
-                PostItemViewHolder.class, mMainFeedRef.orderByChild("reverse_timestamp")
+                PostItemViewHolder.class, mMainFeedRef.orderByChild("reverse_timestamp").limitToLast(64)
         ) {
             @Override
             protected void populateViewHolder(PostItemViewHolder viewHolder, PostItem model, int position) {
                 final String post_key = getRef(position).getKey();
-                superPopViewHolder(viewHolder, model, position, post_key);
+                superPopViewHolder(viewHolder, post_key);
             }
         };
 
@@ -55,6 +57,8 @@ public class AllPostsFragment extends BaseFilterFragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        firebaseRecyclerAdapter.cleanup();
         Log.d("ALLPOSTSFRAGMENT", "ON DESTROY");
     }
+
 }

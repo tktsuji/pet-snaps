@@ -12,6 +12,7 @@ public class PostItem {
     private long reverse_timestamp;
     private String username;
     private long numComments;
+    private long numLikes;
 
     public PostItem() {
 
@@ -81,5 +82,13 @@ public class PostItem {
 
     public void setNumComments(int numComments) {
         this.numComments = numComments;
+    }
+
+    public long getNumLikes() {
+        return numLikes;
+    }
+
+    public void setNumLikes(long numLikes) {
+        this.numLikes = numLikes;
     }
 }

@@ -34,20 +34,12 @@
     </android.support.design.widget.AppBarLayout>
 
 
-    <android.support.v4.view.ViewPager
+    <blackbox.petsnaps.MyViewPager
         android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-    </android.support.v4.view.ViewPager>
-
-    <FrameLayout
-        android:id="@+id/fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        android:layout_marginTop="?actionBarSize">
-    </FrameLayout>
+    </blackbox.petsnaps.MyViewPager>
 
 
 </android.support.design.widget.CoordinatorLayout>

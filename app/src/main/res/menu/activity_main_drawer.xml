@@ -7,6 +7,15 @@
             android:icon="@drawable/ic_view_list_black_24dp"
             android:title="Feed" />
         <item
+            android:id="@+id/nav_top_posts"
+            android:icon="@drawable/ic_star_black_24dp"
+            android:title="Top Posts"
+            />
+        <item
+            android:id="@+id/nav_my_favs"
+            android:icon="@drawable/ic_loyalty_black_24dp"
+            android:title="My Favorites" />
+        <item
             android:id="@+id/nav_my_posts"
             android:icon="@drawable/ic_photo_library_black_24dp"
             android:title="My Posts" />

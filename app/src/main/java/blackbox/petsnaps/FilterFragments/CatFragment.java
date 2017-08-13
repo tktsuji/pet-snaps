@@ -10,12 +10,20 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import blackbox.petsnaps.PostItem;
 import blackbox.petsnaps.PostItemViewHolder;
 import blackbox.petsnaps.R;
 
 public class CatFragment extends BaseFilterFragment {
+
+    private FirebaseRecyclerAdapter<Long, PostItemViewHolder> firebaseRecyclerAdapter;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -25,24 +33,40 @@ public class CatFragment extends BaseFilterFragment {
     @Override
     public void onStart() {
         super.onStart();
-        FirebaseRecyclerAdapter<PostItem, PostItemViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PostItem, PostItemViewHolder>(
-                PostItem.class,
+        Log.d("CATFRAGMENT", "ON START");
+        DatabaseReference catRef = FirebaseDatabase.getInstance().getReference().child("Cat_Posts");
+        final DatabaseReference mPostKeys = FirebaseDatabase.getInstance().getReference().child("Post_Keys");
+        firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Long, PostItemViewHolder>(
+                Long.class,
                 R.layout.post_item,
-                PostItemViewHolder.class, mMainFeedRef.orderByChild("tags/1").equalTo(true)
-        ) {
+                PostItemViewHolder.class, catRef.orderByValue().limitToLast(64)) {
             @Override
-            protected void populateViewHolder(PostItemViewHolder viewHolder, PostItem model, int position) {
+            protected void populateViewHolder(PostItemViewHolder viewHolder, Long model, int position) {
                 final String post_key = getRef(position).getKey();
-                superPopViewHolder(viewHolder, model, position, post_key);
+                final PostItemViewHolder vH = viewHolder;
+                final int p = position;
+                mPostKeys.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if (snapshot.getKey().equals(post_key))
+                                superPopViewHolder(vH, post_key);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
             }
         };
-
         postList.setAdapter(firebaseRecyclerAdapter);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        firebaseRecyclerAdapter.cleanup();
         Log.d("CATFRAGMENT", "ON DESTROY");
     }
 }

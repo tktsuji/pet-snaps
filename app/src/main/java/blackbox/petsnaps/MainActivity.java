@@ -28,6 +28,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import blackbox.petsnaps.FilterFragments.MyFavoritesFragment;
 import blackbox.petsnaps.FilterFragments.MyPostsFragment;
 
 import static android.view.View.GONE;
@@ -42,11 +43,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private TextView welcomeTV;
     private TabLayout tabLayout;
-    private ViewPager viewPager;
-    private FrameLayout fragmentContainer;
+    private MyViewPager viewPager;
+    private blackbox.petsnaps.PagerAdapter pagerAdapter;
+    //private FrameLayout fragmentContainer;
     private Toolbar toolbar;
 
-    private static int currState = 0; // 0:MainFeed WITH TABS | 1:MyPosts
+    private static int currState = 0; // 0:MainFeed WITH TABS | 1:MyPosts | 2:MyFavs | 3: TopPosts
+    private static int hiddenTabs = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             finish();
         }
         else {
-            fragmentContainer = (FrameLayout) findViewById(R.id.fragment_container);
             setTabLayout();
             setDrawerLayout();
         }
@@ -87,6 +89,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             swapInMainFeed();
         else if (currState == 1)
             swapInMyPosts();
+        else if (currState == 2)
+            swapInMyFavs();
+        else if (currState == 3)
+            swapInTopPosts();
     }
 
     @Override
@@ -119,16 +125,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (id == R.id.nav_feed) {
             if (currState != 0) {
-                swapInMainFeed();
                 currState = 0;
+                swapInMainFeed();
             }
         } else if (id == R.id.nav_my_posts) {
             if (currState != 1) {
-                swapInMyPosts();
                 currState = 1;
+                swapInMyPosts();
             }
-        }
-        else if (id == R.id.nav_sign_out) {
+        } else if (id == R.id.nav_my_favs) {
+            if (currState != 2) {
+                swapInMyFavs();
+                currState = 2;
+            }
+        } else if (id == R.id.nav_top_posts) {
+            if (currState != 3) {
+                swapInTopPosts();
+                currState = 3;
+            }
+        } else if (id == R.id.nav_sign_out) {
             firebaseAuth.signOut();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
@@ -140,27 +155,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
    private void swapInMainFeed() {
-       tabLayout.getTabAt(0);
-       fragmentContainer.setVisibility(View.GONE);
-       viewPager.setVisibility(View.VISIBLE);
+       viewPager.setCurrentItem(0);
        tabLayout.setVisibility(View.VISIBLE);
-
        CharSequence title = "Feed";
        if (getSupportActionBar() != null)
         getSupportActionBar().setTitle(title);
    }
 
    private void swapInMyPosts() {
-       MyPostsFragment myPostsFrag = new MyPostsFragment();
-       FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-       transaction.replace(R.id.fragment_container, myPostsFrag)
-               .addToBackStack(null)
-               .commit();
-       fragmentContainer.setVisibility(View.VISIBLE);
-       viewPager.setVisibility(GONE);
-       tabLayout.setVisibility(GONE);
-
+       viewPager.setCurrentItem(7);
+       tabLayout.setVisibility(View.GONE);
        CharSequence title = "My Posts";
+       if (getSupportActionBar() != null)
+           getSupportActionBar().setTitle(title);
+   }
+
+   private void swapInMyFavs() {
+       viewPager.setCurrentItem(8);
+       tabLayout.setVisibility(GONE);
+       CharSequence title = "My Favorites";
+       if (getSupportActionBar() != null)
+           getSupportActionBar().setTitle(title);
+   }
+
+   private void swapInTopPosts() {
+       viewPager.setCurrentItem(9);
+       tabLayout.setVisibility(GONE);
+       CharSequence title = "Top Posts";
        if (getSupportActionBar() != null)
            getSupportActionBar().setTitle(title);
    }
@@ -175,10 +196,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
        tabLayout.addTab(tabLayout.newTab().setText("Reptiles"));
        tabLayout.addTab(tabLayout.newTab().setText("Rodents"));
 
-       viewPager = (ViewPager) findViewById(R.id.pager);
-       final blackbox.petsnaps.PagerAdapter pagerAdapter
-               = new blackbox.petsnaps.PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount());
+       viewPager = (MyViewPager) findViewById(R.id.pager);
+       Bundle bundle = new Bundle();
+       String uid = currentUser.getUid();
+       bundle.putString("uid", uid);
+       pagerAdapter = new blackbox.petsnaps.PagerAdapter(getSupportFragmentManager(), tabLayout.getTabCount()+hiddenTabs, bundle);
        viewPager.setAdapter(pagerAdapter);
+       viewPager.setSwipable(false);
        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
            @Override
@@ -209,7 +233,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
            @Override
            public void onDataChange(DataSnapshot dataSnapshot) {
                currUsername = (String) dataSnapshot.child("username").getValue();
-               System.out.println("TEST: " + currUsername);
                CharSequence welcome = "Hello, " + currUsername + "!";
                welcomeTV.setText(welcome);
                progressDialog.dismiss();
@@ -232,4 +255,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        Log.d("MAIN FEED", "onDestroy()");
+        super.onDestroy();
+    }
 }

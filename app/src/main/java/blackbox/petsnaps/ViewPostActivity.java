@@ -80,7 +80,7 @@ public class ViewPostActivity extends AppCompatActivity implements CreateComment
 
         // SHOW POST
         mPostKey = getIntent().getStringExtra("post_key");
-        mFeedDBRef.child(mPostKey).addValueEventListener(new ValueEventListener() {
+        mFeedDBRef.child(mPostKey).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 String postTitle = (String) dataSnapshot.child("title").getValue();
@@ -153,7 +153,7 @@ public class ViewPostActivity extends AppCompatActivity implements CreateComment
         final String mssg = message.replace("\n", " ");
         if (mAuth.getCurrentUser() != null) {
             final DatabaseReference newComment = mCommentsDBRef.push();
-            mUserDBRef.addValueEventListener(new ValueEventListener() {
+            mUserDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     newComment.child("message").setValue(mssg);
@@ -198,29 +198,30 @@ public class ViewPostActivity extends AppCompatActivity implements CreateComment
         });
     }
 
-    private void setLayout() {
-        // Calculate ActionBar height
-        int actionBarHeight = 0;
-        TypedValue tv = new TypedValue();
-        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
-            System.out.println("ACTION BAR HEIGHT: " + actionBarHeight);
-        }
-        Point size = new Point();
-        getWindowManager().getDefaultDisplay().getSize(size);
-        int screenHeight = size.y;
-        LinearLayout layout = (LinearLayout)findViewById(R.id.post_chunk);
-        ViewGroup.LayoutParams params = layout.getLayoutParams();
-        params.height = screenHeight - actionBarHeight - statusBarHeight - layoutMargins;
-    }
-
     private void deletePost() {
         // DELETE ASSOCIATED LIKES
-        mLikesDBRef.child(mPostKey).removeValue();
+        final DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference().child("Users");
+        mLikesDBRef.child(mPostKey).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if (snapshot.getValue() != null && snapshot.getValue().equals("true")) {
+                        usersRef.child(snapshot.getKey()).child("Favorites").child(mPostKey).removeValue();
+                    }
+                }
+                mLikesDBRef.child(mPostKey).removeValue();
+                Log.d("ViewPostActivity", "DELETED LIKES");
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         // DELETE ASSOCIATED COMMENTS
         deleteComments = true;
-        mCommentsDBRef.addValueEventListener(new ValueEventListener() {
+        mCommentsDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (deleteComments) {
@@ -238,13 +239,59 @@ public class ViewPostActivity extends AppCompatActivity implements CreateComment
             @Override
             public void onCancelled(DatabaseError databaseError) { }
         });
+        Log.d("ViewPostActivity", "DELETED COMMENTS");
 
         // DELETE ASSOCIATED IMAGE FROM STORAGE
         FirebaseStorage mStorage = FirebaseStorage.getInstance();
         StorageReference photoRef = mStorage.getReferenceFromUrl(postImage);
         photoRef.delete();
+        Log.d("ViewPostActivity", "DELETED IMG FROM STORAGE");
 
-        mFeedDBRef.child(mPostKey).removeValue();
+        // DELETE FROM CATEGORIES
+        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference dogRef = dbRef.child("Dog_Posts");
+        DatabaseReference catRef = dbRef.child("Cat_Posts");
+        DatabaseReference birdRef = dbRef.child("Bird_Posts");
+        DatabaseReference rabbitRef = dbRef.child("Rabbit_Posts");
+        DatabaseReference reptileRef = dbRef.child("Reptile_Posts");
+        DatabaseReference rodentRef = dbRef.child("Rodent_Posts");
+        DatabaseReference postKeysRef = dbRef.child("Post_Keys");
+        dogRef.child(mPostKey).removeValue();
+        catRef.child(mPostKey).removeValue();
+        birdRef.child(mPostKey).removeValue();
+        rabbitRef.child(mPostKey).removeValue();
+        reptileRef.child(mPostKey).removeValue();
+        rodentRef.child(mPostKey).removeValue();
+        postKeysRef.child(mPostKey).removeValue();
+        Log.d("ViewPostActivity", "DELETED CATEGORIES");
+
+        // DELETE ACTUAL POST DATA
+        mFeedDBRef.child(mPostKey).removeValue().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d("ViewPostActivity", "DELETED POST ITSELF");
+                //Intent i = new Intent(ViewPostActivity.this, MainActivity.class);
+                //startActivity(i);
+                finish();
+            }
+        });
+
+    }
+
+    private void setLayout() {
+        // Calculate ActionBar height
+        int actionBarHeight = 0;
+        TypedValue tv = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+            System.out.println("ACTION BAR HEIGHT: " + actionBarHeight);
+        }
+        Point size = new Point();
+        getWindowManager().getDefaultDisplay().getSize(size);
+        int screenHeight = size.y;
+        LinearLayout layout = (LinearLayout)findViewById(R.id.post_chunk);
+        ViewGroup.LayoutParams params = layout.getLayoutParams();
+        params.height = screenHeight - actionBarHeight - statusBarHeight - layoutMargins;
     }
 
     @Override
@@ -261,9 +308,6 @@ public class ViewPostActivity extends AppCompatActivity implements CreateComment
         switch(item.getItemId()) {
             case R.id.delete_post:
                 deletePost();
-                Intent i = new Intent(this, MainActivity.class);
-                startActivity(i);
-                finish();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

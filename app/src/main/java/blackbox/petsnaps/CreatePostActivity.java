@@ -76,6 +76,7 @@ public class CreatePostActivity extends AppCompatActivity implements AddTagsFrag
     private FirebaseAuth mAuth;
     private FirebaseUser mCurrentUser;
     private DatabaseReference mUserDBRef;
+    private DatabaseReference mPostKeys;
 
     private ProgressDialog progressDialog;
 
@@ -89,6 +90,7 @@ public class CreatePostActivity extends AppCompatActivity implements AddTagsFrag
         mStorage = FirebaseStorage.getInstance().getReference();
         mDatabase = FirebaseDatabase.getInstance().getReference().child("Main_Feed");
         mUserDBRef = FirebaseDatabase.getInstance().getReference().child("Users").child(mCurrentUser.getUid());
+        mPostKeys = FirebaseDatabase.getInstance().getReference().child("Post_Keys");
 
         containerImgBttn = (ImageButton) findViewById(R.id.container_img_bttn);
         titleET = (EditText) findViewById(R.id.title_tv);
@@ -177,8 +179,9 @@ public class CreatePostActivity extends AppCompatActivity implements AddTagsFrag
             try {
                 // COMPRESS IMAGE
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 1, baos); // FOR TESTING
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 10, baos); // FOR TESTING
                 byte[] data = baos.toByteArray();
 
                 // UPLOAD IMAGE TO STORAGE
@@ -250,7 +253,7 @@ public class CreatePostActivity extends AppCompatActivity implements AddTagsFrag
         if (mAuth.getCurrentUser() != null) {
 
             final DatabaseReference newPost = mDatabase.push();
-            mUserDBRef.addValueEventListener(new ValueEventListener() {
+            mUserDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     newPost.child("title").setValue(title);
@@ -259,12 +262,42 @@ public class CreatePostActivity extends AppCompatActivity implements AddTagsFrag
                     newPost.child("uid").setValue(mCurrentUser.getUid());
                     newPost.child("username").setValue(dataSnapshot.child("username").getValue());
                     newPost.child("numComments").setValue(0);
-                    newPost.child("tags").setValue(tags);
+                    newPost.child("numLikes").setValue(0);
+                    //newPost.child("tags").setValue(tags);
+
                     // WARNING: USER'S DEVICE MAY BE SET TO WRONG TIME -- TEMPORARY SOLUTION
                     long reverseTime = -1 * System.currentTimeMillis();
                     newPost.child("reverse_timestamp").setValue(reverseTime);
 
-                    startActivity(new Intent(CreatePostActivity.this, MainActivity.class));
+
+                    String newPostKey = newPost.getKey();
+                    mPostKeys.child(newPostKey).setValue(true);
+
+                    if (tags.get(0).equals(true)) {
+                        DatabaseReference dogRef = FirebaseDatabase.getInstance().getReference().child("Dog_Posts");
+                        dogRef.child(newPostKey).setValue(reverseTime);
+                    }
+                    if (tags.get(1).equals(true)) {
+                        DatabaseReference catRef = FirebaseDatabase.getInstance().getReference().child("Cat_Posts");
+                        catRef.child(newPostKey).setValue(reverseTime);
+                    }
+                    if (tags.get(2).equals(true)) {
+                        DatabaseReference birdRef = FirebaseDatabase.getInstance().getReference().child("Bird_Posts");
+                        birdRef.child(newPostKey).setValue(reverseTime);
+                    }
+                    if (tags.get(3).equals(true)) {
+                        DatabaseReference rabbitRef = FirebaseDatabase.getInstance().getReference().child("Rabbit_Posts");
+                        rabbitRef.child(newPostKey).setValue(reverseTime);
+                    }
+                    if (tags.get(4).equals(true)) {
+                        DatabaseReference reptileRef = FirebaseDatabase.getInstance().getReference().child("Reptile_Posts");
+                        reptileRef.child(newPostKey).setValue(reverseTime);
+                    }
+                    if (tags.get(5).equals(true)) {
+                        DatabaseReference rodentRef = FirebaseDatabase.getInstance().getReference().child("Rodent_Posts");
+                        rodentRef.child(newPostKey).setValue(reverseTime);
+                    }
+
                     finish();
                 }
 

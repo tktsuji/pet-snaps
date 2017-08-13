@@ -3,6 +3,7 @@ package blackbox.petsnaps;
 import android.content.Context;
 import android.media.Image;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -23,7 +24,6 @@ public class PostItemViewHolder extends RecyclerView.ViewHolder {
 
     DatabaseReference mLikesRef;
     FirebaseAuth mAuth;
-    private boolean processComment = false;
 
     public PostItemViewHolder(View itemView) {
         super(itemView);
@@ -32,7 +32,6 @@ public class PostItemViewHolder extends RecyclerView.ViewHolder {
 
         mLikesRef = FirebaseDatabase.getInstance().getReference().child("Likes");
         mAuth = FirebaseAuth.getInstance();
-        mLikesRef.keepSynced(true);
     }
 
     public void setTitle(String title) {
@@ -48,16 +47,20 @@ public class PostItemViewHolder extends RecyclerView.ViewHolder {
 
     public void setHeartIcon(final Context context, final String post_key) {
         final TextView numLikesTV = (TextView) mView.findViewById(R.id.num_likes_tv);
-        mLikesRef.addValueEventListener(new ValueEventListener() {
+        mLikesRef.child(post_key).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                long numLikes = dataSnapshot.child(post_key).getChildrenCount();
+                long numLikes = dataSnapshot.getChildrenCount();
                 numLikesTV.setText(Long.toString(numLikes));
-                if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+                if (dataSnapshot.hasChild(mAuth.getCurrentUser().getUid())) {
+                    // LIKED A POST
+                    Log.d("VIEWHOLDER LIKED", post_key);
                     heartIcon.setImageResource(R.drawable.heart_liked_icon);
                     numLikesTV.setTextColor(context.getResources().getColor(R.color.colorHeart));
                 }
                 else {
+                    // UNLIKED A POST
+                    Log.d("VIEWHOLDER UNIKED", post_key);
                     heartIcon.setImageResource(R.drawable.heart_icon);
                     numLikesTV.setTextColor(context.getResources().getColor(R.color.colorPrimaryLight));
                 }
@@ -73,11 +76,12 @@ public class PostItemViewHolder extends RecyclerView.ViewHolder {
     public void setNumComments(final String post_key) {
         final TextView numCommentsTV = (TextView) mView.findViewById(R.id.num_comments_tv);
         DatabaseReference feedRef = FirebaseDatabase.getInstance().getReference().child("Main_Feed");
-        feedRef.addValueEventListener(new ValueEventListener() {
+        feedRef.child(post_key).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.hasChild(post_key)) {
-                    long numComments = (long) dataSnapshot.child(post_key).child("numComments").getValue();
+                if (dataSnapshot.child("numComments").getValue() != null) {
+                    // NUM OF COMMENTS
+                    long numComments = (long) dataSnapshot.child("numComments").getValue();
                     numCommentsTV.setText(Long.toString(numComments));
                 }
             }
