@@ -51,7 +51,14 @@ public abstract class BaseFilterFragment extends Fragment {
         return mView;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        postList.scrollToPosition(0);
+    }
+
     protected void superPopViewHolder(final PostItemViewHolder viewHolder, final String post_key) {
+        Log.d("BASEFILTERFRAG", "superPopViewHolder()");
         DatabaseReference postRef = mMainFeedRef.child(post_key);
         postRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

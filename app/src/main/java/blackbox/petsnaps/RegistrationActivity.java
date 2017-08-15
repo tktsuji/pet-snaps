@@ -76,6 +76,7 @@ public class RegistrationActivity extends AppCompatActivity implements View.OnCl
 
         // Email and password are valid
         progressDialog.setMessage("Registering...");
+        progressDialog.setCancelable(false);
         progressDialog.show();
         firebaseAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {

@@ -173,6 +173,7 @@ public class CreatePostActivity extends AppCompatActivity implements AddTagsFrag
         descrp = descrpTemp.replace("\n", " ");
 
         if (!TextUtils.isEmpty(title)  && imageUri != null) {
+            progressDialog.setCancelable(false);
             progressDialog.show();
             String filename = imageUri.getLastPathSegment();
             StorageReference filepath = mStorage.child("Post_Images").child(filename);

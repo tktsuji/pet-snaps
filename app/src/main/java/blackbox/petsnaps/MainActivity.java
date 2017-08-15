@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
         progressDialog.show();
 
 

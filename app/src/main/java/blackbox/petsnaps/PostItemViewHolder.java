@@ -42,7 +42,7 @@ public class PostItemViewHolder extends RecyclerView.ViewHolder {
 
     public void setImage(Context context, String image) {
         ImageView postImage = (ImageView) mView.findViewById(R.id.post_iv);
-        Picasso.with(context).load(image).into(postImage);
+        Picasso.with(context).load(image).fit().centerCrop().into(postImage);
     }
 
     public void setHeartIcon(final Context context, final String post_key) {

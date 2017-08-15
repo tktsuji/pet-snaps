@@ -60,6 +60,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         // Email and password are not empty
         progressDialog.setMessage("Authenticating...");
+        progressDialog.setCancelable(false);
         progressDialog.show();
 
         firebaseAuth.signInWithEmailAndPassword(email, password)
